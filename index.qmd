@@ -125,10 +125,20 @@ These should all be TRUE (except for the first one, which does not have
 a previous result to compare to) ...
 
 ```{r}
-map2(outputs, lag(outputs), identical)
+map2_lgl(outputs, lag(outputs), identical)
 ```
 
 Something here is no-deterministic.
+
+```{r}
+map_lgl(outputs, ~ identical(.x, correct_keys))
+```
+
+And it fails in different ways!
+
+```{r}
+map_lgl(outputs, ~ identical(.x, failure_keys))
+```
 
 # Orignal Demo
 
