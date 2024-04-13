@@ -76,8 +76,11 @@ id <- function(.variables, drop = FALSE) {
   }
   else {
     combs <- c(1, cumprod(ndistinct[-p]))
+    # combs is still the same for all
     mat <- rlang::inject(cbind(!!!ids))
+    # mat is still the same for all
     res <- c((mat - 1L) %*% combs + 1L)
+    # res is now sometimes different!
   }
   if (drop) {
     id_var(res, drop = TRUE)
