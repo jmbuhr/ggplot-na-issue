@@ -5,6 +5,9 @@ format: html
 
 # Setup
 
+R version: 4.3.3
+ggplot2 version: main (or latest CRAN)
+
 
 ```{r}
 library(ggplot2)
@@ -12,10 +15,7 @@ library(ggplot2)
 data <- readr::read_csv('./data/example.csv')
 ```
 
-3.4.4 -> 3.5.0
-
 # Demo
-
 
 ```{r}
 for (i in 1:100) {
