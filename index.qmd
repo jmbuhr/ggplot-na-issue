@@ -1,0 +1,30 @@
+---
+title: ggplot issue
+format: html
+---
+
+# Setup
+
+
+```{r}
+library(ggplot2)
+
+data <- readr::read_csv('./data/example.csv')
+```
+
+3.4.4 -> 3.5.0
+
+# Demo
+
+
+```{r}
+for (i in 1:100) {
+  p <- data |>
+    ggplot() +
+    aes(x, y) +
+    facet_grid(facet_a ~  facet_b)
+  print(p)
+}
+```
+
+
