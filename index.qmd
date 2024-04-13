@@ -8,6 +8,115 @@ format: html
 R version: 4.3.3
 ggplot2 version: main (or latest CRAN)
 
+# Demo
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+#| eval: false
+devtools::reload(pkgload::inst('ggplot2'))
+```
+
+
+```{r}
+# from ggplt2
+# with minor modifications to resolve function imports
+
+# from ggplot2/utilities.R
+# Wrapping unique0() to accept NULL
+unique0 <- function(x, ...) if (is.null(x)) x else vctrs::vec_unique(x, ...)
+
+# from ggplot2/compat-plyr.R
+
+
+# Adapted from plyr:::id_vars
+# Create a unique id for elements in a single vector
+id_var <- function(x, drop = FALSE) {
+  if (length(x) == 0) {
+    id <- integer()
+    n = 0L
+  } else if (!is.null(attr(x, "n")) && !drop) {
+    return(x)
+  } else if (is.factor(x) && !drop) {
+    x <- addNA(x, ifany = TRUE)
+    id <- as.integer(x)
+    n <- length(levels(x))
+  } else {
+    levels <- sort(unique0(x), na.last = TRUE)
+    id <- match(x, levels)
+    n <- max(id)
+  }
+  attr(id, "n") <- n
+  id
+}
+
+id <- function(.variables, drop = FALSE) {
+  nrows <- NULL
+  if (is.data.frame(.variables)) {
+    nrows <- nrow(.variables)
+    .variables <- unclass(.variables)
+  }
+  lengths <- lengths(.variables)
+  .variables <- .variables[lengths != 0]
+  if (length(.variables) == 0) {
+    n <- nrows %||% 0L
+    id <- seq_len(n)
+    attr(id, "n") <- n
+    return(id)
+  }
+  if (length(.variables) == 1) {
+    return(id_var(.variables[[1]], drop = drop))
+  }
+  ids <- rev(lapply(.variables, id_var, drop = drop))
+  p <- length(ids)
+  ndistinct <- vapply(ids, attr, "n", FUN.VALUE = numeric(1), USE.NAMES = FALSE)
+  n <- prod(ndistinct)
+  if (n > 2^31) {
+    char_id <- rlang::inject(paste(!!!ids, sep = "\r"))
+    res <- match(char_id, unique0(char_id))
+  }
+  else {
+    combs <- c(1, cumprod(ndistinct[-p]))
+    mat <- rlang::inject(cbind(!!!ids))
+    res <- c((mat - 1L) %*% combs + 1L)
+  }
+  if (drop) {
+    id_var(res, drop = TRUE)
+  }
+  else {
+    res <- as.integer(res)
+    attr(res, "n") <- n
+    res
+  }
+}
+```
+
+
+```{r}
+joint <- readRDS("./data/failure-case-id-input.Rds")
+```
+
+```{r}
+failure_keys <- readRDS("./data/failure-case-id-output.Rds")
+```
+
+```{r}
+N  <- 10
+outputs = vector("list", N)
+for (i in 1:N) {
+  keys <- id(joint, drop = TRUE)
+  outputs[[i]] <- keys
+}
+```
+
+
+```{r}
+map2(outputs, lag(outputs), identical)
+```
+
+# Orignal Demo
 
 ```{r}
 library(ggplot2)
@@ -15,11 +124,11 @@ library(ggplot2)
 data <- readr::read_csv('./data/example.csv')
 ```
 
-# Demo
 
 ```{r}
-for (i in 1:100) {
+for (i in 1:10) {
   p <- data |>
+    slice_sample(n=10) |>
     ggplot() +
     aes(x, y) +
     facet_grid(facet_a ~  facet_b)
