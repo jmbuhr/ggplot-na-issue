@@ -1,0 +1,103 @@
+---
+title: Minimal Matrix Problem
+format: html
+---
+
+# Setup
+
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+combs <- readRDS("./data/combs.rds")
+mat <- readRDS("./data/mat.rds")
+correct_res <- readRDS("./data/res.rds")
+mat_1 <- mat - 1L
+```
+
+
+```{r}
+N  <- 10
+outputs = vector("list", N)
+for (i in 1:N) {
+  res <- mat_1 %*% combs
+  outputs[[i]] <- res
+}
+
+map2_lgl(outputs, lag(outputs), identical)
+```
+
+
+```{r}
+outputs[[1]][1:100] == outputs[[2]][1:100]
+```
+
+
+```{r}
+outputs[[1]][1:100]
+outputs[[2]][1:100]
+```
+
+```{r}
+options("matprod")
+```
+
+> "default":
+> uses BLAS to speed up computation, but to ensure correct propagation of NaN and Inf values it uses an unoptimized 3-loop algorithm for inputs that may contain NaN or Inf values. When deemed beneficial for performance, "default" may call the 3-loop algorithm unconditionally, i.e., without checking the input for NaN/Inf values. The 3-loop algorithm uses (only) a double accumulator for summation, which is consistent with the reference BLAS implementation.
+
+
+```{r}
+N  <- 10
+outputs = vector("list", N)
+for (i in 1:N) {
+  res <- mat_1 %*% combs
+  outputs[[i]] <- res
+}
+
+map2_lgl(outputs, lag(outputs), identical)
+```
+
+```{r}
+options(matprod = "internal")
+```
+
+> "internal"
+> uses an unoptimized 3-loop algorithm which correctly propagates NaN and Inf values and is consistent in precision with other summation algorithms inside R like sum or colSums (which now means that it uses a long double accumulator for summation if available and enabled, see capabilities).
+
+```{r}
+N  <- 10
+outputs = vector("list", N)
+for (i in 1:N) {
+  res <- mat_1 %*% combs
+  outputs[[i]] <- res
+}
+
+map2_lgl(outputs, lag(outputs), identical)
+```
+
+
+```{r}
+options(matprod = "default")
+```
+
+
+```{r}
+any(is.nan(mat))
+```
+
+```{r}
+any(is.na(mat))
+```
+
+```{r}
+any(is.nan(combs))
+```
+
+```{r}
+any(is.na(combs))
+```
+
+

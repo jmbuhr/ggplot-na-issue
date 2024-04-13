@@ -77,9 +77,12 @@ id <- function(.variables, drop = FALSE) {
   else {
     combs <- c(1, cumprod(ndistinct[-p]))
     # combs is still the same for all
+    saveRDS(combs, "./data/combs.rds")
     mat <- rlang::inject(cbind(!!!ids))
+    saveRDS(mat, "./data/mat.rds")
     # mat is still the same for all
     res <- c((mat - 1L) %*% combs + 1L)
+    saveRDS(mat, "./data/res.rds")
     # res is now sometimes different!
   }
   if (drop) {
