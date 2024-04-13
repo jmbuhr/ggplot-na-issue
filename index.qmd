@@ -140,6 +140,18 @@ And it fails in different ways!
 map_lgl(outputs, ~ identical(.x, failure_keys))
 ```
 
+Tail correct:
+
+```{r}
+tail(correct_keys)
+```
+
+```{r}
+tail(outputs[[4]])
+tail(outputs[[5]])
+tail(outputs[[6]])
+```
+
 # Orignal Demo
 
 ```{r}
