@@ -19,7 +19,7 @@ library(tidyverse)
 devtools::reload(pkgload::inst('ggplot2'))
 ```
 
-Define `id` as in ggplot2 to play around with it faster:
+Define `id` [as in ggplot2](https://github.com/tidyverse/ggplot2/blob/1050f093b974d4a9dcac621e2df79a34d3b0679f/R/compat-plyr.R#L88) to play around with it faster:
 
 ```{r}
 # with minor modifications to resolve function imports
@@ -110,6 +110,8 @@ never fails).
 correct_keys <- readRDS("./data/correct-case-id-output.Rds")
 ```
 
+Run the same function multiple times with the same input:
+
 ```{r}
 N  <- 10
 outputs = vector("list", N)
@@ -119,9 +121,14 @@ for (i in 1:N) {
 }
 ```
 
+These should all be TRUE (except for the first one, which does not have
+a previous result to compare to) ...
+
 ```{r}
 map2(outputs, lag(outputs), identical)
 ```
+
+Something here is no-deterministic.
 
 # Orignal Demo
 
