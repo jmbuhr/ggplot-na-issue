@@ -3,6 +3,12 @@ title: ggplot2 `id` function issue
 format: html
 ---
 
+# TlDR:
+
+It's a problem with the matrix multiplication.
+
+More minimal example: [minimal](./minimal.html)
+
 # Setup
 
 R version: 4.3.3
