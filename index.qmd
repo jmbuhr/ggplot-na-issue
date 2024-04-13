@@ -1,5 +1,5 @@
 ---
-title: ggplot issue
+title: ggplot2 `id` function issue
 format: html
 ---
 
@@ -19,20 +19,17 @@ library(tidyverse)
 devtools::reload(pkgload::inst('ggplot2'))
 ```
 
+Define `id` as in ggplot2 to play around with it faster:
 
 ```{r}
-# from ggplt2
 # with minor modifications to resolve function imports
+# (added rlang::)
+# (added vctrs::)
 
 # from ggplot2/utilities.R
-# Wrapping unique0() to accept NULL
 unique0 <- function(x, ...) if (is.null(x)) x else vctrs::vec_unique(x, ...)
 
 # from ggplot2/compat-plyr.R
-
-
-# Adapted from plyr:::id_vars
-# Create a unique id for elements in a single vector
 id_var <- function(x, drop = FALSE) {
   if (length(x) == 0) {
     id <- integer()
@@ -93,13 +90,24 @@ id <- function(.variables, drop = FALSE) {
 }
 ```
 
+One example input:
 
 ```{r}
 joint <- readRDS("./data/failure-case-id-input.Rds")
 ```
 
+And the corresponding failing output that was produced at runtime
+on the workstation on which this fails:
+
 ```{r}
 failure_keys <- readRDS("./data/failure-case-id-output.Rds")
+```
+
+And the corresponding correct output (from a workstation on which this
+never fails).
+
+```{r}
+correct_keys <- readRDS("./data/correct-case-id-output.Rds")
 ```
 
 ```{r}
@@ -111,7 +119,6 @@ for (i in 1:N) {
 }
 ```
 
-
 ```{r}
 map2(outputs, lag(outputs), identical)
 ```
@@ -119,13 +126,11 @@ map2(outputs, lag(outputs), identical)
 # Orignal Demo
 
 ```{r}
+#| eval: false
 library(ggplot2)
 
 data <- readr::read_csv('./data/example.csv')
-```
 
-
-```{r}
 for (i in 1:10) {
   p <- data |>
     slice_sample(n=10) |>
