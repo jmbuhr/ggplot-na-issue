@@ -3,183 +3,22 @@ title: ggplot2 `id` function issue
 format: html
 ---
 
-# TlDR:
 
-It's a problem with the matrix multiplication.
+# Solved
 
-More minimal example: [minimal](./minimal.html)
+For future reference:
 
-# Setup
+It was problem with the matrix multiplication in ggplot2.
 
-R version: 4.3.3
-ggplot2 version: main (or latest CRAN)
+One workstation (that produced random outputs) was using Intels mkl math libraries,
+while all the others that didn't have the issue where using openblas.
 
-# Demo
+Check with `sessionInfo()` in R and then fix in the linux command line with
 
-```{r}
-library(tidyverse)
+```bash
+sudo update-alternatives --config libblas.so.3-x86_64-linux-gnu
+sudo update-alternatives --config liblapack.so.3-x86_64-linux-gnu
 ```
 
-```{r}
-#| eval: false
-devtools::reload(pkgload::inst('ggplot2'))
-```
-
-Define `id` [as in ggplot2](https://github.com/tidyverse/ggplot2/blob/1050f093b974d4a9dcac621e2df79a34d3b0679f/R/compat-plyr.R#L88) to play around with it faster:
-
-```{r}
-# with minor modifications to resolve function imports
-# (added rlang::)
-# (added vctrs::)
-
-# from ggplot2/utilities.R
-unique0 <- function(x, ...) if (is.null(x)) x else vctrs::vec_unique(x, ...)
-
-# from ggplot2/compat-plyr.R
-id_var <- function(x, drop = FALSE) {
-  if (length(x) == 0) {
-    id <- integer()
-    n = 0L
-  } else if (!is.null(attr(x, "n")) && !drop) {
-    return(x)
-  } else if (is.factor(x) && !drop) {
-    x <- addNA(x, ifany = TRUE)
-    id <- as.integer(x)
-    n <- length(levels(x))
-  } else {
-    levels <- sort(unique0(x), na.last = TRUE)
-    id <- match(x, levels)
-    n <- max(id)
-  }
-  attr(id, "n") <- n
-  id
-}
-
-id <- function(.variables, drop = FALSE) {
-  nrows <- NULL
-  if (is.data.frame(.variables)) {
-    nrows <- nrow(.variables)
-    .variables <- unclass(.variables)
-  }
-  lengths <- lengths(.variables)
-  .variables <- .variables[lengths != 0]
-  if (length(.variables) == 0) {
-    n <- nrows %||% 0L
-    id <- seq_len(n)
-    attr(id, "n") <- n
-    return(id)
-  }
-  if (length(.variables) == 1) {
-    return(id_var(.variables[[1]], drop = drop))
-  }
-  ids <- rev(lapply(.variables, id_var, drop = drop))
-  p <- length(ids)
-  ndistinct <- vapply(ids, attr, "n", FUN.VALUE = numeric(1), USE.NAMES = FALSE)
-  n <- prod(ndistinct)
-  if (n > 2^31) {
-    char_id <- rlang::inject(paste(!!!ids, sep = "\r"))
-    res <- match(char_id, unique0(char_id))
-  }
-  else {
-    combs <- c(1, cumprod(ndistinct[-p]))
-    # combs is still the same for all
-    saveRDS(combs, "./data/combs.rds")
-    mat <- rlang::inject(cbind(!!!ids))
-    saveRDS(mat, "./data/mat.rds")
-    # mat is still the same for all
-    res <- c((mat - 1L) %*% combs + 1L)
-    saveRDS(mat, "./data/res.rds")
-    # res is now sometimes different!
-  }
-  if (drop) {
-    id_var(res, drop = TRUE)
-  }
-  else {
-    res <- as.integer(res)
-    attr(res, "n") <- n
-    res
-  }
-}
-```
-
-One example input:
-
-```{r}
-joint <- readRDS("./data/failure-case-id-input.Rds")
-```
-
-And the corresponding failing output that was produced at runtime
-on the workstation on which this fails:
-
-```{r}
-failure_keys <- readRDS("./data/failure-case-id-output.Rds")
-```
-
-And the corresponding correct output (from a workstation on which this
-never fails).
-
-```{r}
-correct_keys <- readRDS("./data/correct-case-id-output.Rds")
-```
-
-Run the same function multiple times with the same input:
-
-```{r}
-N  <- 10
-outputs = vector("list", N)
-for (i in 1:N) {
-  keys <- id(joint, drop = TRUE)
-  outputs[[i]] <- keys
-}
-```
-
-These should all be TRUE (except for the first one, which does not have
-a previous result to compare to) ...
-
-```{r}
-map2_lgl(outputs, lag(outputs), identical)
-```
-
-Something here is no-deterministic.
-
-```{r}
-map_lgl(outputs, ~ identical(.x, correct_keys))
-```
-
-And it fails in different ways!
-
-```{r}
-map_lgl(outputs, ~ identical(.x, failure_keys))
-```
-
-Tail correct:
-
-```{r}
-tail(correct_keys)
-```
-
-```{r}
-tail(outputs[[4]])
-tail(outputs[[5]])
-tail(outputs[[6]])
-```
-
-# Orignal Demo
-
-```{r}
-#| eval: false
-library(ggplot2)
-
-data <- readr::read_csv('./data/example.csv')
-
-for (i in 1:10) {
-  p <- data |>
-    slice_sample(n=10) |>
-    ggplot() +
-    aes(x, y) +
-    facet_grid(facet_a ~  facet_b)
-  print(p)
-}
-```
 
 
